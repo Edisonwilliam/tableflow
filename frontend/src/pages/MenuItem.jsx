@@ -12,12 +12,12 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import api from "../services/api";
-import { themeFor } from "../three/dishtheme.jsx";
+import { themeFor } from "../three/Dishtheme.jsx";
 
 gsap.registerPlugin(ScrollTrigger);
 
 // Load the 3D scene only when a customer opens a dish.
-const DishScene = lazy(() => import("../three/DishScene.jsx"));
+const DishScene = lazy(() => import("../three/Dishscene.jsx"));
 
 const serif = "font-['Playfair_Display',serif]";
 const skeleton = "animate-pulse bg-white/[0.05]";
