@@ -18,7 +18,7 @@ import {
 import * as THREE from "three";
 import gsap from "gsap";
 
-import { pickScene, drinkColor } from "./dishtheme";
+import { pickScene, drinkColor } from "./Dishtheme";
 
 /* =========================================================
    HELPERS
