@@ -12,7 +12,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import api from "../services/api";
-import { themeFor } from "../three/dishTheme";
+import { themeFor } from "../three/dishtheme";
 
 gsap.registerPlugin(ScrollTrigger);
 
