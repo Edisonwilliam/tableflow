@@ -1,0 +1,235 @@
+/* =========================================================
+   EXPERIENCE (calm, professional)
+========================================================= */
+
+.tf-xp { padding: 140px 5vw; background: var(--tf-bg-soft); }
+
+.tf-xp-inner {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 90px;
+  align-items: start;
+}
+
+.tf-xp-head { position: sticky; top: 120px; }
+
+.tf-xp-head h2 {
+  margin: 0 0 20px;
+  color: var(--tf-white);
+  font-family: "Playfair Display", serif;
+  font-size: clamp(36px, 4vw, 56px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.tf-xp-head p { margin: 0; max-width: 340px; color: var(--tf-muted); font-size: 15px; line-height: 1.7; }
+
+.tf-xp-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 38px 0 44px;
+}
+
+.tf-xp-row:last-child { border-bottom: 1px solid var(--tf-border); }
+
+.tf-xp-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--tf-copper);
+  opacity: 0.55;
+}
+
+.tf-xp-num { grid-row: span 2; padding-top: 8px; color: var(--tf-copper-light); font-size: 13px; font-weight: 600; }
+
+.tf-xp-row h3 {
+  margin: 0 0 10px;
+  color: var(--tf-white);
+  font-family: "Playfair Display", serif;
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.tf-xp-row p { grid-column: 2; max-width: 460px; margin: 0; color: var(--tf-muted); font-size: 15px; line-height: 1.75; }
+
+/* =========================================================
+   SPACES (pinned horizontal gallery)
+========================================================= */
+
+.tf-gal {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 48px;
+  padding: 90px 0 70px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(200, 135, 85, 0.1), transparent 50%),
+    var(--tf-bg);
+}
+
+.tf-gal-head { padding: 0 5vw; }
+
+.tf-gal-head h2 {
+  margin: 0 0 14px;
+  color: var(--tf-white);
+  font-family: "Playfair Display", serif;
+  font-size: clamp(38px, 4.5vw, 64px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.tf-gal-head p { margin: 0; max-width: 460px; color: var(--tf-muted); font-size: 15px; line-height: 1.7; }
+
+.tf-gal-track { display: flex; gap: 28px; padding: 0 5vw; width: max-content; will-change: transform; }
+
+.tf-gal-card {
+  position: relative;
+  margin: 0;
+  width: clamp(340px, 34vw, 520px);
+  height: min(54vh, 480px);
+  overflow: hidden;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.tf-gal-card img {
+  width: 120%;
+  max-width: none;
+  height: 100%;
+  margin-left: -10%;
+  object-fit: cover;
+  filter: saturate(0.85);
+}
+
+.tf-gal-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(13, 10, 8, 0.92) 100%);
+}
+
+.tf-gal-card figcaption { position: absolute; left: 26px; right: 26px; bottom: 24px; z-index: 2; }
+
+.tf-gal-card h3 {
+  margin: 0 0 6px;
+  color: var(--tf-white);
+  font-family: "Playfair Display", serif;
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.tf-gal-card p { margin: 0; color: var(--tf-muted-light); font-size: 13px; line-height: 1.6; }
+
+.tf-gal-progress { margin: 0 5vw; height: 1px; background: var(--tf-border-strong); }
+.tf-gal-progress span { display: block; height: 100%; background: var(--tf-copper); transform: scaleX(0); transform-origin: left; }
+
+/* =========================================================
+   CTA + FOOTER
+========================================================= */
+
+.tf-cta {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.tf-cta-bg {
+  position: absolute;
+  inset: -10% 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.7);
+  will-change: transform;
+}
+
+.tf-cta-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, var(--tf-bg) 0%, rgba(13, 10, 8, 0.55) 35%, rgba(13, 10, 8, 0.85) 100%);
+}
+
+.tf-cta-inner { margin: auto; padding: 120px 5vw; text-align: center; }
+
+.tf-cta-inner h2 {
+  margin: 0 0 18px;
+  color: var(--tf-white);
+  font-family: "Playfair Display", serif;
+  font-size: clamp(44px, 6.5vw, 92px);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.tf-cta-inner p { margin: 0 auto 34px; max-width: 420px; color: var(--tf-muted-light); font-size: 15px; line-height: 1.7; }
+
+.tf-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 26px 5vw;
+  border-top: 1px solid var(--tf-border);
+  color: var(--tf-muted);
+  font-size: 12px;
+}
+
+.tf-footer nav { display: flex; gap: 26px; }
+.tf-footer a:hover { color: var(--tf-cream); }
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .tf-xp { padding: 90px 20px; }
+  .tf-xp-inner { grid-template-columns: 1fr; gap: 40px; }
+  .tf-xp-head { position: static; }
+  .tf-xp-row h3 { font-size: 26px; }
+
+  .tf-gal { min-height: auto; padding: 80px 0 60px; gap: 32px; }
+  .tf-gal-head { padding: 0 20px; }
+  .tf-gal-track {
+    width: auto;
+    padding: 0 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .tf-gal-track::-webkit-scrollbar { display: none; }
+  .tf-gal-card { width: 78vw; height: 380px; scroll-snap-align: center; }
+  .tf-gal-card img { width: 100%; margin-left: 0; }
+  .tf-gal-progress { display: none; }
+
+  .tf-cta { min-height: 80vh; }
+  .tf-footer { flex-direction: column; padding: 24px 20px; }
+}
+
+/* =========================================================
+   PERFORMANCE OVERRIDES
+========================================================= */
+
+.tf-ambient,
+.tf-grain { display: none; }
+
+.tf-drink-halo { filter: none; will-change: auto; }
+.tf-hero-background { will-change: auto; }
+.tf-discover-image,
+.tf-gal-card img,
+.tf-cta-bg { filter: none; }
+.tf-gal-card img { width: 100%; margin-left: 0; }
