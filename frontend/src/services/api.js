@@ -1,37 +1,33 @@
 import axios from "axios";
 
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
+).replace(/\/+$/, "");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 
-  "http://localhost:5000/api",
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 20000,
 });
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(
-      "tableflow_token"
-    );
+    const token = localStorage.getItem("tableflow_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Let the browser set the correct
-    // multipart/form-data boundary for FormData.
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
-    } else {
-      config.headers["Content-Type"] =
-        "application/json";
     }
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;

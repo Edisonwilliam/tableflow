@@ -1,3 +1,4 @@
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
@@ -8,7 +9,9 @@ const User = require("../models/User");
 // GOOGLE CLIENT
 // =========================================================
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
 
 // =========================================================
 // TOKEN HELPERS
@@ -16,13 +19,9 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId) => {
   return jwt.sign(
-    {
-      userId,
-    },
+    { userId },
     process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    }
+    { expiresIn: "7d" }
   );
 };
 
@@ -36,9 +35,7 @@ const createRegistrationToken = (googleUser) => {
       avatar: googleUser.avatar,
     },
     process.env.JWT_SECRET,
-    {
-      expiresIn: "10m",
-    }
+    { expiresIn: "10m" }
   );
 };
 
@@ -78,7 +75,9 @@ const normalizeEmail = (email) => {
 
 const verifyGoogleCredential = async (credential) => {
   if (!credential || typeof credential !== "string") {
-    const error = new Error("Google credential is required.");
+    const error = new Error(
+      "Google credential is required."
+    );
     error.statusCode = 400;
     throw error;
   }
@@ -87,7 +86,6 @@ const verifyGoogleCredential = async (credential) => {
     const error = new Error(
       "Google authentication is not configured on the server."
     );
-
     error.statusCode = 500;
     throw error;
   }
@@ -109,7 +107,6 @@ const verifyGoogleCredential = async (credential) => {
       const error = new Error(
         "Google could not verify your account. Please try again."
       );
-
       error.statusCode = 401;
       throw error;
     }
@@ -120,7 +117,6 @@ const verifyGoogleCredential = async (credential) => {
       const error = new Error(
         "Google did not provide a valid email address."
       );
-
       error.statusCode = 401;
       throw error;
     }
@@ -129,7 +125,8 @@ const verifyGoogleCredential = async (credential) => {
       googleId: String(payload.sub),
       email,
       name:
-        typeof payload.name === "string" && payload.name.trim()
+        typeof payload.name === "string" &&
+        payload.name.trim()
           ? payload.name.trim()
           : email.split("@")[0],
       avatar:
@@ -138,21 +135,20 @@ const verifyGoogleCredential = async (credential) => {
           : "",
     };
   } catch (error) {
-    console.error("Google credential verification error:", {
-      message: error.message,
-      statusCode: error.statusCode,
-    });
-
     if (error.statusCode) {
       throw error;
     }
+
+    console.error(
+      "Google credential verification failed:",
+      error.message
+    );
 
     const verificationError = new Error(
       "Google authentication could not be verified. Please try again."
     );
 
     verificationError.statusCode = 401;
-
     throw verificationError;
   }
 };
@@ -165,7 +161,14 @@ const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    if (!name?.trim() || !email?.trim() || !password) {
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof password !== "string" ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Name, email, and password are required.",
       });
@@ -177,7 +180,10 @@ const register = async (req, res) => {
       });
     }
 
-    if (role !== "customer" && role !== "restaurant") {
+    if (
+      role !== "customer" &&
+      role !== "restaurant"
+    ) {
       return res.status(400).json({
         message: "Please select a valid account type.",
       });
@@ -197,7 +203,10 @@ const register = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      12
+    );
 
     const user = await User.create({
       name: name.trim(),
@@ -222,11 +231,9 @@ const register = async (req, res) => {
 
     console.error("Registration error:", error);
 
-    return res.status(error.statusCode || 500).json({
+    return res.status(500).json({
       message:
-        error.statusCode && error.statusCode < 500
-          ? error.message
-          : "Unable to register right now. Please try again.",
+        "Unable to register right now. Please try again.",
     });
   }
 };
@@ -239,7 +246,12 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email?.trim() || !password) {
+    if (
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof password !== "string" ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Email and password are required.",
       });
@@ -257,7 +269,6 @@ const login = async (req, res) => {
       });
     }
 
-    // Google-only account
     if (!user.password) {
       return res.status(400).json({
         code: "GOOGLE_ACCOUNT",
@@ -292,30 +303,18 @@ const login = async (req, res) => {
 };
 
 // =========================================================
-// GOOGLE LOGIN
-// EXISTING GOOGLE ACCOUNTS ONLY
+// GOOGLE LOGIN + EXISTING ACCOUNT LINKING
 // =========================================================
 
 const googleLogin = async (req, res) => {
   try {
+    // 1. Verify the Google credential and verified email.
     const googleUser = await verifyGoogleCredential(
       req.body?.credential
     );
 
-    // -----------------------------------------------------
-    // IMPORTANT DEBUG INFORMATION
-    // -----------------------------------------------------
-
-    console.log("GOOGLE LOGIN USER:", {
-      googleId: googleUser.googleId,
-      email: googleUser.email,
-      name: googleUser.name,
-    });
-
-    // -----------------------------------------------------
-    // 1. FIND BY GOOGLE ID
-    // -----------------------------------------------------
-
+    // 2. Authenticate directly if this Google ID is
+    // already associated with a TableFlow account.
     const googleIdUser = await User.findOne({
       googleId: googleUser.googleId,
     });
@@ -328,44 +327,105 @@ const googleLogin = async (req, res) => {
       );
     }
 
-    // -----------------------------------------------------
-    // 2. FIND BY EMAIL
-    // -----------------------------------------------------
-
+    // 3. Find an existing TableFlow account by the
+    // verified Google email.
     const emailUser = await User.findOne({
       email: googleUser.email,
     });
 
-    if (emailUser) {
-      console.log("GOOGLE LOGIN EMAIL ALREADY EXISTS:", {
-        id: emailUser._id,
-        email: emailUser.email,
-        googleId: emailUser.googleId || null,
-        hasPassword: Boolean(emailUser.password),
-      });
-
-      return res.status(409).json({
-        code: "ACCOUNT_EXISTS_USE_EXISTING_LOGIN",
+    // No existing account: let the user register first.
+    if (!emailUser) {
+      return res.status(404).json({
+        code: "ACCOUNT_NOT_FOUND",
         message:
-          "An account already exists with this email. Please log in using your existing sign-in method.",
+          "No TableFlow account was found. Please register first.",
+        redirectTo: "/register",
+      });
+    }
+
+    // 4. Never replace a different Google identity
+    // already attached to this account.
+    if (
+      emailUser.googleId &&
+      emailUser.googleId !== googleUser.googleId
+    ) {
+      return res.status(409).json({
+        code: "GOOGLE_ACCOUNT_ALREADY_LINKED",
+        message:
+          "This TableFlow account is linked to a different Google account. Please use your existing sign-in method.",
         redirectTo: "/login",
       });
     }
 
-    // -----------------------------------------------------
-    // 3. GOOGLE ACCOUNT DOES NOT EXIST
-    // -----------------------------------------------------
+    // 5. Atomically attach the Google ID only when
+    // the account has no Google ID yet.
+    const linkedUser = await User.findOneAndUpdate(
+      {
+        _id: emailUser._id,
+        $or: [
+          { googleId: { $exists: false } },
+          { googleId: null },
+          { googleId: "" },
+        ],
+      },
+      {
+        $set: {
+          googleId: googleUser.googleId,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
-    return res.status(404).json({
-      code: "ACCOUNT_NOT_FOUND",
+    if (linkedUser) {
+      return sendAuthenticatedUser(
+        res,
+        linkedUser,
+        "Google account linked successfully."
+      );
+    }
+
+    // 6. Handle a concurrent login/link request.
+    // It may have linked this exact Google ID already.
+    const currentGoogleUser = await User.findOne({
+      googleId: googleUser.googleId,
+    });
+
+    if (
+      currentGoogleUser &&
+      String(currentGoogleUser._id) ===
+        String(emailUser._id)
+    ) {
+      return sendAuthenticatedUser(
+        res,
+        currentGoogleUser,
+        "Google login successful."
+      );
+    }
+
+    return res.status(409).json({
+      code: "GOOGLE_ACCOUNT_ALREADY_LINKED",
       message:
-        "No TableFlow account was found. Please register first.",
-      redirectTo: "/register",
+        "This account could not be linked to Google. Please try again or use your existing sign-in method.",
+      redirectTo: "/login",
     });
   } catch (error) {
+    // The unique Google ID index can reject a competing
+    // link request. Never treat that as successful linking.
+    if (error.code === 11000) {
+      return res.status(409).json({
+        code: "GOOGLE_ACCOUNT_ALREADY_LINKED",
+        message:
+          "This Google account is already associated with an account. Please sign in with the correct account.",
+        redirectTo: "/login",
+      });
+    }
+
     console.error("Google login error:", error);
 
-    return res.status(error.statusCode || 401).json({
+    return res.status(error.statusCode || 500).json({
       message:
         error.statusCode && error.statusCode < 500
           ? error.message
@@ -376,9 +436,7 @@ const googleLogin = async (req, res) => {
 
 // =========================================================
 // PREPARE GOOGLE REGISTRATION
-//
-// This verifies the Google account but DOES NOT create
-// the TableFlow user yet.
+// Does not create a user.
 // =========================================================
 
 const prepareGoogleRegistration = async (req, res) => {
@@ -387,48 +445,12 @@ const prepareGoogleRegistration = async (req, res) => {
       req.body?.credential
     );
 
-    // -----------------------------------------------------
-    // DEBUG: THIS TELLS US EXACTLY WHICH GOOGLE ACCOUNT
-    // GOOGLE SENT TO THE BACKEND.
-    // -----------------------------------------------------
-
-    console.log("GOOGLE REGISTRATION USER RECEIVED:", {
-      googleId: googleUser.googleId,
-      email: googleUser.email,
-      name: googleUser.name,
-    });
-
-    // -----------------------------------------------------
-    // CHECK EXISTING ACCOUNT BY GOOGLE ID OR EMAIL
-    // -----------------------------------------------------
-
     const existingUser = await User.findOne({
       $or: [
-        {
-          googleId: googleUser.googleId,
-        },
-        {
-          email: googleUser.email,
-        },
+        { googleId: googleUser.googleId },
+        { email: googleUser.email },
       ],
     });
-
-    console.log(
-      "EXISTING TABLEFLOW USER FOUND:",
-      existingUser
-        ? {
-            id: existingUser._id,
-            email: existingUser.email,
-            googleId: existingUser.googleId || null,
-            role: existingUser.role,
-            hasPassword: Boolean(existingUser.password),
-          }
-        : null
-    );
-
-    // -----------------------------------------------------
-    // ACCOUNT ALREADY EXISTS
-    // -----------------------------------------------------
 
     if (existingUser) {
       return res.status(409).json({
@@ -439,19 +461,13 @@ const prepareGoogleRegistration = async (req, res) => {
       });
     }
 
-    // -----------------------------------------------------
-    // CREATE SHORT-LIVED REGISTRATION TOKEN
-    // -----------------------------------------------------
-
     const registrationToken =
       createRegistrationToken(googleUser);
 
     return res.status(200).json({
       message:
         "Choose your TableFlow account type to continue.",
-
       registrationToken,
-
       profile: {
         name: googleUser.name,
         email: googleUser.email,
@@ -464,7 +480,7 @@ const prepareGoogleRegistration = async (req, res) => {
       error
     );
 
-    return res.status(error.statusCode || 401).json({
+    return res.status(error.statusCode || 500).json({
       message:
         error.statusCode && error.statusCode < 500
           ? error.message
@@ -475,18 +491,11 @@ const prepareGoogleRegistration = async (req, res) => {
 
 // =========================================================
 // COMPLETE GOOGLE REGISTRATION
-//
-// Creates the user AFTER the customer/restaurant role
-// has been selected.
 // =========================================================
 
 const completeGoogleRegistration = async (req, res) => {
   try {
     const { registrationToken, role } = req.body;
-
-    // -----------------------------------------------------
-    // VALIDATE TOKEN
-    // -----------------------------------------------------
 
     if (!registrationToken) {
       return res.status(400).json({
@@ -495,20 +504,15 @@ const completeGoogleRegistration = async (req, res) => {
       });
     }
 
-    // -----------------------------------------------------
-    // VALIDATE ROLE
-    // -----------------------------------------------------
-
-    if (role !== "customer" && role !== "restaurant") {
+    if (
+      role !== "customer" &&
+      role !== "restaurant"
+    ) {
       return res.status(400).json({
         message:
           "Please select Customer or Restaurant.",
       });
     }
-
-    // -----------------------------------------------------
-    // VERIFY REGISTRATION TOKEN
-    // -----------------------------------------------------
 
     let registration;
 
@@ -517,17 +521,13 @@ const completeGoogleRegistration = async (req, res) => {
         registrationToken,
         process.env.JWT_SECRET
       );
-    } catch (error) {
+    } catch {
       return res.status(401).json({
         code: "REGISTRATION_SESSION_EXPIRED",
         message:
           "Your Google registration session has expired. Please start again.",
       });
     }
-
-    // -----------------------------------------------------
-    // VALIDATE TOKEN CONTENT
-    // -----------------------------------------------------
 
     if (
       registration.purpose !== "google_registration" ||
@@ -544,34 +544,15 @@ const completeGoogleRegistration = async (req, res) => {
       registration.email
     );
 
-    // -----------------------------------------------------
-    // FINAL DUPLICATE CHECK
-    //
-    // This is important because another request could have
-    // created the account between PREPARE and COMPLETE.
-    // -----------------------------------------------------
-
+    // Check again before creating the user.
     const existingUser = await User.findOne({
       $or: [
-        {
-          googleId: registration.googleId,
-        },
-        {
-          email: normalizedEmail,
-        },
+        { googleId: registration.googleId },
+        { email: normalizedEmail },
       ],
     });
 
     if (existingUser) {
-      console.log(
-        "GOOGLE REGISTRATION BLOCKED - ACCOUNT EXISTS:",
-        {
-          id: existingUser._id,
-          email: existingUser.email,
-          googleId: existingUser.googleId || null,
-        }
-      );
-
       return res.status(409).json({
         code: "ACCOUNT_EXISTS",
         message:
@@ -579,10 +560,6 @@ const completeGoogleRegistration = async (req, res) => {
         redirectTo: "/login",
       });
     }
-
-    // -----------------------------------------------------
-    // CREATE USER
-    // -----------------------------------------------------
 
     const user = await User.create({
       name: registration.name,
@@ -592,26 +569,13 @@ const completeGoogleRegistration = async (req, res) => {
       role,
     });
 
-    // -----------------------------------------------------
-    // LOGIN IMMEDIATELY AFTER REGISTRATION
-    // -----------------------------------------------------
-
     return sendAuthenticatedUser(
       res,
       user,
       "Your TableFlow account has been created successfully."
     );
   } catch (error) {
-    // -----------------------------------------------------
-    // MONGODB DUPLICATE KEY
-    // -----------------------------------------------------
-
     if (error.code === 11000) {
-      console.error(
-        "Google registration duplicate key:",
-        error.keyValue || error
-      );
-
       return res.status(409).json({
         code: "ACCOUNT_EXISTS",
         message:
@@ -667,10 +631,7 @@ const getMe = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(
-      "Get current user error:",
-      error
-    );
+    console.error("Get current user error:", error);
 
     return res.status(500).json({
       message: "Unable to load your account.",
