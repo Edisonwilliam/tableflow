@@ -4,6 +4,17 @@ import { GoogleLogin } from "@react-oauth/google";
 
 import { useAuth } from "../context/AuthContext";
 import AuthLayout from "../components/AuthLayout";
+import {
+  BottomText,
+  Divider,
+  ErrorBox,
+  Field,
+  GoogleSlot,
+  GoogleStatus,
+  Notice,
+  PrimaryButton,
+  linkCls,
+} from "../components/AuthUI";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -11,34 +22,22 @@ const Login = () => {
 
   const { login, googleLogin } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleAccountNotFound, setGoogleAccountNotFound] =
-    useState(false);
+  const [googleAccountNotFound, setGoogleAccountNotFound] = useState(false);
 
   const notice = location.state?.message;
 
   const redirectUser = (user) => {
-    navigate(
-      user.role === "restaurant" ? "/dashboard" : "/",
-      { replace: true }
-    );
+    navigate(user.role === "restaurant" ? "/dashboard" : "/", { replace: true });
   };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
-
+    setFormData((previous) => ({ ...previous, [name]: value }));
     setError("");
   };
 
@@ -49,11 +48,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const result = await login(
-        formData.email,
-        formData.password
-      );
-
+      const result = await login(formData.email, formData.password);
       redirectUser(result.user);
     } catch (err) {
       setError(
@@ -73,24 +68,15 @@ const Login = () => {
 
     try {
       if (!credentialResponse.credential) {
-        throw new Error(
-          "Google did not return a valid credential."
-        );
+        throw new Error("Google did not return a valid credential.");
       }
 
-      const result = await googleLogin(
-        credentialResponse.credential
-      );
-
+      const result = await googleLogin(credentialResponse.credential);
       redirectUser(result.user);
     } catch (err) {
       const data = err.response?.data;
 
-      setError(
-        data?.message ||
-          err.message ||
-          "Google login failed. Please try again."
-      );
+      setError(data?.message || err.message || "Google login failed. Please try again.");
 
       if (data?.code === "ACCOUNT_NOT_FOUND") {
         setGoogleAccountNotFound(true);
@@ -106,157 +92,97 @@ const Login = () => {
       subtitle="Return to the table."
       description="Sign in to manage your reservations and continue your TableFlow experience."
     >
-      <div className="tf-auth-form">
-        {/* ---------- NOTICE ---------- */}
-        {notice && (
-          <div className="tf-auth-notice" role="status">
-            <span aria-hidden="true">✦</span>
-            <p>{notice}</p>
-          </div>
-        )}
+      <div className="flex flex-col gap-5">
+        {notice && <Notice>{notice}</Notice>}
 
-        {/* ---------- FORM ---------- */}
-        <form onSubmit={handleSubmit}>
-          <div className="tf-field">
-            <label className="tf-label" htmlFor="login-email">
-              Email address
-            </label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Field
+            id="login-email"
+            label="Email address"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={handleChange}
+            autoComplete="email"
+            inputMode="email"
+            required
+          />
 
-            <input
-              id="login-email"
-              className="tf-input"
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div className="tf-field">
-            <div className="tf-password-row">
-              <label
-                className="tf-label"
-                htmlFor="login-password"
-              >
-                Password
-              </label>
-
+          <Field
+            id="login-password"
+            label="Password"
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={handleChange}
+            autoComplete="current-password"
+            required
+            labelAction={
               <button
                 type="button"
-                className="tf-link-button"
-                onClick={() =>
-                  setError(
-                    "Password recovery is not available yet."
-                  )
-                }
+                onClick={() => setError("Password recovery is not available yet.")}
+                className={`-my-1 h-8 px-1 text-xs ${linkCls}`}
               >
                 Forgot password?
               </button>
-            </div>
-
-            <input
-              id="login-password"
-              className="tf-input"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              autoComplete="current-password"
-              required
-            />
-          </div>
+            }
+          />
 
           {error && (
-            <div className="tf-error" role="alert">
+            <ErrorBox>
               <p>{error}</p>
 
               {googleAccountNotFound && (
-                <p style={{ marginTop: 10 }}>
+                <p className="mt-2.5">
                   <Link
                     to="/register"
-                    state={{
-                      message:
-                        "No TableFlow account was found. Please register to continue.",
-                    }}
-                    style={{
-                      color: "var(--tf-copper-light)",
-                      fontWeight: 600,
-                      textDecoration: "underline",
-                      textUnderlineOffset: 4,
-                    }}
+                    state={{ message: "No TableFlow account was found. Please register to continue." }}
+                    className={`${linkCls} underline`}
                   >
                     Create an account →
                   </Link>
                 </p>
               )}
-            </div>
+            </ErrorBox>
           )}
 
-          <button
-            type="submit"
-            className="tf-primary-button"
-            disabled={loading}
-          >
-            {loading ? (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 10,
-                  justifyContent: "center",
-                }}
-              >
-                <span className="tf-spinner" />
-                Signing in…
-              </span>
-            ) : (
-              "Sign in"
-            )}
-          </button>
+          <PrimaryButton type="submit" loading={loading} loadingText="Signing in…">
+            Sign in
+          </PrimaryButton>
         </form>
 
-        {/* ---------- DIVIDER ---------- */}
-        <div className="tf-divider">
-          <span>or continue with</span>
+        <Divider />
+
+        <div className="flex flex-col gap-3">
+          <GoogleSlot>
+            {(width) => (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  setError("Google verification failed. Please try again.");
+                  setGoogleAccountNotFound(false);
+                }}
+                text="continue_with"
+                theme="filled_black"
+                shape="pill"
+                size="large"
+                width={String(width)}
+                useOneTap={false}
+              />
+            )}
+          </GoogleSlot>
+
+          {googleLoading && <GoogleStatus>Signing in with Google…</GoogleStatus>}
         </div>
 
-        {/* ---------- GOOGLE ---------- */}
-        <div className="tf-google-wrap">
-          <div className="tf-google-shell">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => {
-                setError(
-                  "Google verification failed. Please try again."
-                );
-                setGoogleAccountNotFound(false);
-              }}
-              text="continue_with"
-              theme="filled_black"
-              shape="pill"
-              size="large"
-              width="316"
-              useOneTap={false}
-            />
-          </div>
-
-          {googleLoading && (
-            <p className="tf-google-status" role="status">
-              <span className="tf-spinner tf-spinner--accent" />
-              Signing in with Google…
-            </p>
-          )}
-        </div>
-
-        {/* ---------- FOOTER ---------- */}
-        <p className="tf-bottom-text">
+        <BottomText>
           Don't have an account?{" "}
-          <Link to="/register">Create an account</Link>
-        </p>
+          <Link to="/register" className={linkCls}>
+            Create an account
+          </Link>
+        </BottomText>
       </div>
     </AuthLayout>
   );

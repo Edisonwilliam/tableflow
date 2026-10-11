@@ -4,38 +4,44 @@ import { GoogleLogin } from "@react-oauth/google";
 
 import { useAuth } from "../context/AuthContext";
 import AuthLayout from "../components/AuthLayout";
+import {
+  BottomText,
+  Divider,
+  ErrorBox,
+  Field,
+  GoogleSlot,
+  GoogleStatus,
+  Notice,
+  PrimaryButton,
+  linkCls,
+  ring,
+  serif,
+} from "../components/AuthUI";
 
 /* =========================================================
    ICONS
 ========================================================= */
 
+const iconProps = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "1.8",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  width: "20",
+  height: "20",
+};
+
 const CustomerIcon = (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    width="18"
-    height="18"
-  >
+  <svg {...iconProps}>
     <circle cx="12" cy="8" r="3.5" />
     <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
   </svg>
 );
 
 const RestaurantIcon = (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    width="18"
-    height="18"
-  >
+  <svg {...iconProps}>
     <path d="M3 21h18" />
     <path d="M5 21V8l7-5 7 5v13" />
     <path d="M9 21v-6h6v6" />
@@ -51,27 +57,55 @@ const RoleCard = ({ active, onClick, title, description, icon }) => (
     type="button"
     aria-pressed={active}
     onClick={onClick}
-    className={`tf-auth-role-card ${
-      active ? "tf-auth-role-card-active" : ""
+    className={`flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition duration-300 active:scale-[0.99] ${ring} ${
+      active
+        ? "border-[#dfa274] bg-[#c88755]/10 shadow-[0_0_0_3px_rgba(200,135,85,0.12)]"
+        : "border-[#f4eee5]/10 bg-white/[0.025] [@media(hover:hover)]:hover:border-[#dfa274]/45 [@media(hover:hover)]:hover:bg-white/[0.045]"
     }`}
   >
-    <span className="tf-auth-role-icon" aria-hidden="true">
+    <span
+      aria-hidden="true"
+      className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition duration-300 ${
+        active ? "bg-[#c88755] text-[#171310]" : "bg-white/[0.06] text-[#dfa274]"
+      }`}
+    >
       {icon}
     </span>
 
-    <div className="tf-auth-role-content">
-      <span className="tf-auth-role-title">{title}</span>
-      <span className="tf-auth-role-description">
-        {description}
-      </span>
-    </div>
+    <span className="min-w-0 flex-1">
+      <span className="block text-sm font-semibold text-[#fffaf3]">{title}</span>
+      <span className="mt-0.5 block text-xs leading-5 text-[#a79b8e]">{description}</span>
+    </span>
 
-    {active && (
-      <span className="tf-auth-role-check" aria-hidden="true">
-        ✓
-      </span>
-    )}
+    <span
+      aria-hidden="true"
+      className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-bold transition duration-300 ${
+        active ? "border-[#c88755] bg-[#c88755] text-[#171310]" : "border-[#f4eee5]/20 text-transparent"
+      }`}
+    >
+      ✓
+    </span>
   </button>
+);
+
+const RoleGroup = ({ labelId, value, onChange }) => (
+  <div role="group" aria-labelledby={labelId} className="grid gap-3">
+    <RoleCard
+      active={value === "customer"}
+      onClick={() => onChange("customer")}
+      title="Customer"
+      description="Discover restaurants and reserve tables."
+      icon={CustomerIcon}
+    />
+
+    <RoleCard
+      active={value === "restaurant"}
+      onClick={() => onChange("restaurant")}
+      title="Restaurant"
+      description="Manage your restaurant, menu and reservations."
+      icon={RestaurantIcon}
+    />
+  </div>
 );
 
 /* =========================================================
@@ -82,31 +116,20 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const {
-    register,
-    prepareGoogleRegistration,
-    completeGoogleRegistration,
-  } = useAuth();
+  const { register, prepareGoogleRegistration, completeGoogleRegistration } = useAuth();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "",
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "" });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [googleStep, setGoogleStep] = useState(false);
-  const [googleRegistrationToken, setGoogleRegistrationToken] =
-    useState("");
+  const [googleRegistrationToken, setGoogleRegistrationToken] = useState("");
   const [googleProfile, setGoogleProfile] = useState(null);
   const [googleRole, setGoogleRole] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState("");
-  const [googleAccountExists, setGoogleAccountExists] =
-    useState(false);
+  const [googleAccountExists, setGoogleAccountExists] = useState(false);
 
   const notice = location.state?.message;
 
@@ -140,24 +163,11 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const result = await register(
-        formData.name,
-        formData.email,
-        formData.password,
-        formData.role
-      );
+      const result = await register(formData.name, formData.email, formData.password, formData.role);
 
-      navigate(
-        result.user.role === "restaurant"
-          ? "/dashboard"
-          : "/",
-        { replace: true }
-      );
+      navigate(result.user.role === "restaurant" ? "/dashboard" : "/", { replace: true });
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Registration failed. Please try again."
-      );
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -170,14 +180,10 @@ const Register = () => {
 
     try {
       if (!credentialResponse.credential) {
-        throw new Error(
-          "Google did not return a valid credential."
-        );
+        throw new Error("Google did not return a valid credential.");
       }
 
-      const result = await prepareGoogleRegistration(
-        credentialResponse.credential
-      );
+      const result = await prepareGoogleRegistration(credentialResponse.credential);
 
       setGoogleRegistrationToken(result.registrationToken);
       setGoogleProfile(result.profile);
@@ -186,11 +192,7 @@ const Register = () => {
     } catch (err) {
       const data = err.response?.data;
 
-      setGoogleError(
-        data?.message ||
-          err.message ||
-          "Google registration failed. Please try again."
-      );
+      setGoogleError(data?.message || err.message || "Google registration failed. Please try again.");
 
       if (data?.code === "ACCOUNT_EXISTS") {
         setGoogleAccountExists(true);
@@ -202,16 +204,12 @@ const Register = () => {
 
   const handleCompleteGoogleRegistration = async () => {
     if (!googleRole) {
-      setGoogleError(
-        "Please select an account type to continue."
-      );
+      setGoogleError("Please select an account type to continue.");
       return;
     }
 
     if (!googleRegistrationToken) {
-      setGoogleError(
-        "Your registration session is missing. Please start again."
-      );
+      setGoogleError("Your registration session is missing. Please start again.");
       return;
     }
 
@@ -219,32 +217,16 @@ const Register = () => {
     setGoogleLoading(true);
 
     try {
-      const result = await completeGoogleRegistration(
-        googleRegistrationToken,
-        googleRole
-      );
+      const result = await completeGoogleRegistration(googleRegistrationToken, googleRole);
 
-      navigate(
-        result.user.role === "restaurant"
-          ? "/dashboard"
-          : "/",
-        { replace: true }
-      );
+      navigate(result.user.role === "restaurant" ? "/dashboard" : "/", { replace: true });
     } catch (err) {
       const data = err.response?.data;
 
-      setGoogleError(
-        data?.message ||
-          "Unable to complete registration. Please try again."
-      );
+      setGoogleError(data?.message || "Unable to complete registration. Please try again.");
 
-      if (
-        data?.code === "ACCOUNT_EXISTS" ||
-        data?.code === "REGISTRATION_SESSION_EXPIRED"
-      ) {
-        setGoogleAccountExists(
-          data?.code === "ACCOUNT_EXISTS"
-        );
+      if (data?.code === "ACCOUNT_EXISTS" || data?.code === "REGISTRATION_SESSION_EXPIRED") {
+        setGoogleAccountExists(data?.code === "ACCOUNT_EXISTS");
         setGoogleStep(false);
         setGoogleRegistrationToken("");
         setGoogleProfile(null);
@@ -274,194 +256,108 @@ const Register = () => {
       subtitle="Your next great dining experience starts here."
       description="Join TableFlow to discover restaurants, reserve tables, and enjoy a better dining experience."
     >
-      <div className="tf-auth-form">
-        {/* ---------- NOTICE ---------- */}
-        {notice && !googleStep && (
-          <div className="tf-auth-notice" role="status">
-            <span aria-hidden="true">✦</span>
-            <p>{notice}</p>
-          </div>
-        )}
+      <div className="flex flex-col gap-5">
+        {notice && !googleStep && <Notice>{notice}</Notice>}
 
         {!googleStep ? (
           <>
             {/* ============================================
                 STEP 1 — Standard registration
             ============================================ */}
-            <form onSubmit={handleSubmit}>
-              <div className="tf-field">
-                <label
-                  className="tf-label"
-                  htmlFor="register-name"
-                >
-                  Full name
-                </label>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <Field
+                id="register-name"
+                label="Full name"
+                type="text"
+                name="name"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={handleChange}
+                autoComplete="name"
+                maxLength={100}
+                required
+              />
 
-                <input
-                  id="register-name"
-                  className="tf-input"
-                  type="text"
-                  name="name"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  autoComplete="name"
-                  maxLength={100}
-                  required
-                />
-              </div>
+              <Field
+                id="register-email"
+                label="Email address"
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                autoComplete="email"
+                inputMode="email"
+                required
+              />
 
-              <div className="tf-field">
-                <label
-                  className="tf-label"
-                  htmlFor="register-email"
-                >
-                  Email address
-                </label>
+              <Field
+                id="register-password"
+                label="Password"
+                type="password"
+                name="password"
+                placeholder="At least 6 characters"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
 
-                <input
-                  id="register-email"
-                  className="tf-input"
-                  type="email"
-                  name="email"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                  required
-                />
-              </div>
-
-              <div className="tf-field">
-                <label
-                  className="tf-label"
-                  htmlFor="register-password"
-                >
-                  Password
-                </label>
-
-                <input
-                  id="register-password"
-                  className="tf-input"
-                  type="password"
-                  name="password"
-                  placeholder="At least 6 characters"
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  minLength={6}
-                  required
-                />
-              </div>
-
-              <div className="tf-field">
-                <span className="tf-label">
+              <div>
+                <span id="register-role-label" className="mb-2 block text-xs font-semibold tracking-[0.02em] text-[#c8bdb0]">
                   How will you use TableFlow?
                 </span>
 
-                <div className="tf-auth-role-grid">
-                  <RoleCard
-                    active={formData.role === "customer"}
-                    onClick={() =>
-                      handleRoleChange("customer")
-                    }
-                    title="Customer"
-                    description="Discover restaurants and reserve tables."
-                    icon={CustomerIcon}
-                  />
-
-                  <RoleCard
-                    active={formData.role === "restaurant"}
-                    onClick={() =>
-                      handleRoleChange("restaurant")
-                    }
-                    title="Restaurant"
-                    description="Manage your restaurant, menu and reservations."
-                    icon={RestaurantIcon}
-                  />
-                </div>
+                <RoleGroup labelId="register-role-label" value={formData.role} onChange={handleRoleChange} />
               </div>
 
               {error && (
-                <div className="tf-error" role="alert">
+                <ErrorBox>
                   <p>{error}</p>
-                </div>
+                </ErrorBox>
               )}
 
-              <button
-                type="submit"
-                className="tf-primary-button"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 10,
-                      justifyContent: "center",
-                    }}
-                  >
-                    <span className="tf-spinner" />
-                    Creating account…
-                  </span>
-                ) : (
-                  "Create account"
-                )}
-              </button>
+              <PrimaryButton type="submit" loading={loading} loadingText="Creating account…">
+                Create account
+              </PrimaryButton>
             </form>
 
-            {/* ---------- DIVIDER ---------- */}
-            <div className="tf-divider">
-              <span>or continue with</span>
-            </div>
+            <Divider />
 
             {/* ---------- GOOGLE ---------- */}
-            <div className="tf-google-wrap">
-              <div className="tf-google-shell">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => {
-                    setGoogleError(
-                      "Google verification failed. Please try again."
-                    );
-                  }}
-                  text="signup_with"
-                  theme="filled_black"
-                  shape="pill"
-                  size="large"
-                  width="316"
-                  useOneTap={false}
-                />
-              </div>
+            <div className="flex flex-col gap-3">
+              <GoogleSlot>
+                {(width) => (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      setGoogleError("Google verification failed. Please try again.");
+                    }}
+                    text="signup_with"
+                    theme="filled_black"
+                    shape="pill"
+                    size="large"
+                    width={String(width)}
+                    useOneTap={false}
+                  />
+                )}
+              </GoogleSlot>
 
-              {googleLoading && (
-                <p className="tf-google-status" role="status">
-                  <span className="tf-spinner tf-spinner--accent" />
-                  Verifying your Google account…
-                </p>
-              )}
+              {googleLoading && <GoogleStatus>Verifying your Google account…</GoogleStatus>}
 
               {googleError && (
-                <div className="tf-error" role="alert">
+                <ErrorBox>
                   <p>{googleError}</p>
 
                   {googleAccountExists && (
-                    <p style={{ marginTop: 10 }}>
-                      <Link
-                        to="/login"
-                        style={{
-                          color: "var(--tf-copper-light)",
-                          fontWeight: 600,
-                          textDecoration: "underline",
-                          textUnderlineOffset: 4,
-                        }}
-                      >
+                    <p className="mt-2.5">
+                      <Link to="/login" className={`${linkCls} underline`}>
                         Go to Login →
                       </Link>
                     </p>
                   )}
-                </div>
+                </ErrorBox>
               )}
             </div>
           </>
@@ -471,127 +367,89 @@ const Register = () => {
           ============================================ */
           <>
             {/* Profile card */}
-            <div className="tf-auth-profile">
+            <div className="flex items-center gap-4 rounded-2xl border border-[#f4eee5]/10 bg-white/[0.03] p-4">
               {googleProfile?.picture ? (
                 <img
                   src={googleProfile.picture}
-                  alt={
-                    googleProfile?.name ||
-                    "Google profile"
-                  }
-                  className="tf-auth-profile-avatar"
+                  alt={googleProfile?.name || "Google profile"}
+                  referrerPolicy="no-referrer"
+                  className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-[#dfa274]/30"
                 />
               ) : (
-                <div className="tf-auth-profile-avatar-fallback">
-                  {googleProfile?.name?.[0]?.toUpperCase() ||
-                    "G"}
+                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#c88755]/20 text-lg text-[#dfa274] ${serif}`}>
+                  {googleProfile?.name?.[0]?.toUpperCase() || "G"}
                 </div>
               )}
 
-              <div className="tf-auth-profile-info">
-                <div className="tf-auth-profile-badges">
-                  <span>Verified</span>
-                  <span className="tf-auth-profile-dot" />
-                  <span>Google</span>
-                </div>
-
-                <p className="tf-auth-profile-name">
-                  {googleProfile?.name ||
-                    "Your Google account"}
+              <div className="min-w-0">
+                <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#7fc7ae]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#7fc7ae]" />
+                  Verified with Google
                 </p>
 
-                <p className="tf-auth-profile-email">
-                  {googleProfile?.email}
+                <p className="mt-1 truncate text-sm font-semibold text-[#fffaf3]">
+                  {googleProfile?.name || "Your Google account"}
                 </p>
+
+                <p className="truncate text-xs text-[#a79b8e]">{googleProfile?.email}</p>
               </div>
             </div>
 
             {/* Step header */}
             <div>
-              <p className="tf-auth-step-eyebrow">
-                One last step
-              </p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#dfa274]">One last step</p>
 
-              <h3 className="tf-auth-step-title">
+              <h3 id="google-role-label" className={`mt-2 text-2xl font-medium leading-tight text-[#fffaf3] ${serif}`}>
                 How will you use TableFlow?
               </h3>
 
-              <p className="tf-auth-step-description">
-                This helps us set up the right
-                experience for you.
+              <p className="mt-2 text-sm leading-6 text-[#a79b8e]">
+                This helps us set up the right experience for you.
               </p>
             </div>
 
-            {/* Role selection */}
-            <div className="tf-auth-role-grid">
-              <RoleCard
-                active={googleRole === "customer"}
-                onClick={() => {
-                  setGoogleRole("customer");
-                  setGoogleError("");
-                }}
-                title="Customer"
-                description="Discover restaurants and reserve tables."
-                icon={CustomerIcon}
-              />
-
-              <RoleCard
-                active={googleRole === "restaurant"}
-                onClick={() => {
-                  setGoogleRole("restaurant");
-                  setGoogleError("");
-                }}
-                title="Restaurant"
-                description="Manage your restaurant, menu and reservations."
-                icon={RestaurantIcon}
-              />
-            </div>
+            <RoleGroup
+              labelId="google-role-label"
+              value={googleRole}
+              onChange={(role) => {
+                setGoogleRole(role);
+                setGoogleError("");
+              }}
+            />
 
             {googleError && (
-              <div className="tf-error" role="alert">
+              <ErrorBox>
                 <p>{googleError}</p>
-              </div>
+              </ErrorBox>
             )}
 
-            <button
+            <PrimaryButton
               type="button"
               onClick={handleCompleteGoogleRegistration}
-              disabled={!googleRole || googleLoading}
-              className="tf-primary-button"
+              disabled={!googleRole}
+              loading={googleLoading}
+              loadingText="Creating account…"
             >
-              {googleLoading ? (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 10,
-                    justifyContent: "center",
-                  }}
-                >
-                  <span className="tf-spinner" />
-                  Creating account…
-                </span>
-              ) : (
-                "Create account"
-              )}
-            </button>
+              Create account
+            </PrimaryButton>
 
             <button
               type="button"
               onClick={resetGoogleRegistration}
               disabled={googleLoading}
-              className="tf-auth-back-link"
+              className={`mx-auto h-11 rounded-full px-4 text-sm font-semibold text-[#c8bdb0] transition disabled:opacity-50 [@media(hover:hover)]:hover:text-[#fffaf3] ${ring}`}
             >
               ← Back to registration
             </button>
           </>
         )}
 
-        {/* ---------- FOOTER ---------- */}
-        <p className="tf-bottom-text">
+        <BottomText>
           Already have an account?{" "}
-          <Link to="/login">Sign in</Link>
-        </p>
+          <Link to="/login" className={linkCls}>
+            Sign in
+          </Link>
+        </BottomText>
       </div>
     </AuthLayout>
   );
