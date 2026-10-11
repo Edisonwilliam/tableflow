@@ -15,7 +15,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://tableflow-du9k.onrender.com",
+  "https://tableflowe.vercel.app",
 ];
 
 app.use(
